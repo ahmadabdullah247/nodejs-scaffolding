@@ -1,0 +1,11 @@
+# Remove logs
+*.log
+
+# Remove private enviroment variables 
+/env/enviroment.js
+
+# Remove Node modules
+/node_modules
+
+# package-lock file
+package-lock.json
