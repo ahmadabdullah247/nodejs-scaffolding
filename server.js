@@ -12,7 +12,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
-const routes = require('./router');
+const routes = require('./routes');
 
 // initialize variables 
 // ========================================================================================
@@ -24,7 +24,7 @@ const app = express();
 // ========================================================================================
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended:false}));
-app.use(express.static((path.join(root,'dist'))));
+// app.use(express.static((path.join(root,'dist'))));
 app.use('/api',routes);
 
 app.get('*',(req,res)=>{

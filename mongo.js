@@ -8,7 +8,11 @@ const mongoUri ='mongodb://nodejs-scaffolding:MKcuLza1jHW6z0gcNyBMSmhFJNwu4Sa5ka
 
 function connect(){
     // return mongoose.connect(mongoUri,{useMongoClient:true});
-    return mongoose.connect(mongoUri,{useNewUrlParser: true});
+    
+    return mongoose.connect(mongoUri,{
+        useCreateIndex: true,
+        useNewUrlParser: true
+    });
 
 }
 
