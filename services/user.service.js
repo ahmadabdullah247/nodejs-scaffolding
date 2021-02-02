@@ -1,70 +1,56 @@
+const express  = require('express');
+const config  = require('config');
+const bcrypt  = require('bcryptjs');
+const jwt  = require('jsonwebtoken');
 const User = require('../models/user.model');
+const { check, validationResult } = require('express-validator');
 
-require('../mongo').connect();
+const router = express.Router();
 
-function getUsers(req, res) {
-    const docquery = User.find({});
-    docquery.exec()
-        .then(users => {
-            res.status(200).json(users);
-        })
-        .catch(error => {
-            res.status(500).send(error);
-            return;
-        });
-}
 
-function postUsers(req, res) {
-    const originalUser = { name: req.body.name, age: req.body.age,
-        sex: req.body.sex, username: req.body.username,password: req.body.password};
-    const user = new User(originalUser);
-    user.save(error => {
-        if (checkServerError(res, error)) return;
-        res.status(201).json(user);
-        console.log('user created successfully!');
-    });
-}
+// @router POST api/user
+// @dec    Register user
+// @access Public
+router.post('/', [ 
+    check('name', 'Please name is required').not().isEmpty(),
+    check('email', 'Please include validemail').isEmail(),
+    check('password', 'Please enter password with 6 or more characters').isLength({ min: 6 })],
+    async (req,res) => {
 
-function putUsers(req, res) {
-    const id = parseInt(req.params.id, 10);
-    const updateUser = { id: req.body.id, name: req.body.name };
-    User.findOne({ id: id }, (error, user) => {
-        if (checkServerError(res, error)) return;
-        if (!checkFound(res, user)) return;
-        user.name = updateUser.name;
-
-        user.save(error => {
-            if (checkServerError(res, error)) return;
-            res.status(200).json(user);
-            console.log('user updated successfully!');
-        });
-    });
-}
-
-function deleteUsers(req, res) {
-    const id = parseInt(req.params.id, 10);
-    User.findOneAndRemove({ id: id })
-        .then(user => {
-            if (!checkFound(res, user)) return;
-            res.status(200).json(user);
-            console.log('User deleted');
-        })
-        .catch(error => { if (checkServerError(res, error)) return; });
-}
-
-function checkFound(res, user) {
-    if (!user) {
-        res.status(404).send('User not found');
-        return;
+    const errors = validationResult(req);
+    if(!errors.isEmpty()){
+        return res.status(400).json({ errors: errors.array() });
     }
-    return user;
-}
 
-function checkServerError(res, error) {
-    if (error) {
-        res.status(500).send(error);
-        return error;
+    const { name, email, password } = req.body;
+    try {
+        let user = await User.findOne({ email });
+        if(user){
+            return res.status(409).json({ msg: 'User already exsist' })
+        }
+
+        user = new User({ name, email, password });
+
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(password, salt);
+        await user.save();
+
+        const payload = {
+            user: {
+                id: user.id
+            }
+        }
+
+        jwt.sign(payload, config.get('jwtSecret'), { expiresIn: 360000 }, 
+        (err, token) => {
+            if(err) throw err;
+            res.json({ token });
+        });
+
+    } catch (err) {
+        console.log(err.message);
+        res.status(500).send('Sever Error');
     }
-}
+});
 
-module.exports = { getUsers, postUsers, putUsers, deleteUsers };
+module.exports = router;

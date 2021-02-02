@@ -9,3 +9,5 @@
 
 # package-lock file
 package-lock.json
+config/default.json
+

@@ -10,26 +10,25 @@
 // require dependencies 
 // ========================================================================================
 const express = require('express');
-const bodyParser = require('body-parser');
-const path = require('path');
-const routes = require('./routes');
+// const routes = require('./routes');
+const connectDB = require('./config/db');
 
 // initialize variables 
 // ========================================================================================
-const root = './';
 const port = process.env.PORT || 3000;
 const app = express();
+// Connect to Database
+connectDB();
 
 // define middleware 
 // ========================================================================================
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended:false}));
-// app.use(express.static((path.join(root,'dist'))));
-app.use('/api',routes);
+app.use(express.json({ extended: false }));
+// app.use('/api',routes);
 
-app.get('*',(req,res)=>{
-    res.json('Something went wrong!!');
-})
+app.use('/api/auth', require('./services/auth.service'));
+app.use('/api/users', require('./services/user.service'));
+
+// app.get('*',(req,res)=> res.json('Something went wrong!!'));
 
 // start server
 // ========================================================================================
